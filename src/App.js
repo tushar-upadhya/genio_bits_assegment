@@ -1,6 +1,9 @@
 import axios from "axios";
+
 import { useState, useEffect } from "react";
+
 import "./App.css";
+
 import Recipe from "./components/Recipe";
 import Header from "./components/Header";
 import Authentication from "./components/Authentication";
@@ -8,16 +11,30 @@ import SavedRecipes from "./components/SavedRecipes";
 
 function App() {
     const [search, setSearch] = useState("");
+
     const [recipes, setRecipes] = useState([]);
+
     const [loggedIn, setLoggedIn] = useState(false);
+
     const [savedRecipes, setSavedRecipes] = useState([]);
 
-    const APP_ID = `82e453da`;
+    const APP_ID = "82e453da";
     const APP_KEY = "3bb5d1a3b992f408b9003effd74c9c22";
 
     useEffect(() => {
         getRecipes();
     }, []);
+
+    useEffect(() => {
+        if (loggedIn) {
+            const savedRecipesData = localStorage.getItem("savedRecipes");
+            if (savedRecipesData) {
+                setSavedRecipes(JSON.parse(savedRecipesData));
+            }
+        } else {
+            setSavedRecipes([]);
+        }
+    }, [loggedIn]);
 
     const getRecipes = async () => {
         const res = await axios.get(
@@ -56,19 +73,31 @@ function App() {
 
     const handleLogout = () => {
         localStorage.removeItem("user");
-
         setLoggedIn(false);
-        setSavedRecipes([]);
     };
 
     const handleSaveRecipe = (recipe) => {
         setSavedRecipes((prevSavedRecipes) => [...prevSavedRecipes, recipe]);
+
+        localStorage.setItem(
+            "savedRecipes",
+            JSON.stringify([...savedRecipes, recipe])
+        );
     };
 
     const handleRemoveRecipe = (recipe) => {
         setSavedRecipes((prevSavedRecipes) =>
             prevSavedRecipes.filter(
                 (savedRecipe) => savedRecipe.label !== recipe.label
+            )
+        );
+
+        localStorage.setItem(
+            "savedRecipes",
+            JSON.stringify(
+                savedRecipes.filter(
+                    (savedRecipe) => savedRecipe.label !== recipe.label
+                )
             )
         );
     };
@@ -80,6 +109,7 @@ function App() {
                 onInputChange={onInputChange}
                 onSearchClick={onSearchClick}
                 loggedIn={loggedIn}
+                onLogout={handleLogout}
             />
             <div className="container">
                 {!loggedIn ? (
